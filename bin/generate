@@ -8,4 +8,6 @@ thrift -o $base/lib/0.7.1-cdh3u2 --gen js:node -I $base/src/0.7.1-cdh3u2 $base/s
 thrift -o $base/lib/0.7.1-cdh3u2 --gen js:node -I $base/src/0.7.1-cdh3u2 $base/src/0.7.1-cdh3u2/hive_service.thrift 
 thrift -o $base/lib/0.7.1-cdh3u2 --gen js:node -I $base/src/0.7.1-cdh3u2 $base/src/0.7.1-cdh3u2/fb303.thrift 
 thrift -o $base/lib/0.7.1-cdh3u2 --gen js:node -I $base/src/0.7.1-cdh3u2 $base/src/0.7.1-cdh3u2/serde.thrift 
-thrift -o $base/lib/0.7.1-cdh3u2 --gen js:node -I $base/src/0.7.1-cdh3u2 $base/src/0.7.1-cdh3u2/queryplan.thrift 
+thrift -o $base/lib/0.7.1-cdh3u2 --gen js:node -I $base/src/0.7.1-cdh3u2 $base/src/0.7.1-cdh3u2/queryplan.thrift
+cp -rp $base/lib/0.7.1-cdh3u2/gen-nodejs/* $base/lib/0.7.1-cdh3u2/
+rm -rf $base/lib/0.7.1-cdh3u2/gen-nodejs
