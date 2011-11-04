@@ -4,12 +4,22 @@ The project export the Hive API throught Thrift. Multiple versions of hive are
 supported. 
 
 The only function added to the generated Thrift code is `hive.createClient`. It 
-take an `options` object as its argument and return the result of 
-`thrift.createClient`. This client object is enriched with a `connection` 
-property to expose the object returned by `thrift.createConnection` as well as
-with the `end` function as a shortcut to `connection.end`.
+take an `options` object as its argument and return an object with the following
+properties:
 
-## Hive connection: suggar example
+-   `client`   
+    A reference to the hive client returned by `thrift.createClient`
+-   `connection`   
+    A reference to the hive connection returned by `thrift.createConnection`
+-   `end([callback])`   
+    Close the Thrift connection
+-   `execute(query, [callback])`   
+    Execute a query
+-   `query(query, [size], [callback])`   
+    Execute a query and return its results as an array of arrays (rows and 
+    columns)
+
+## Hive connection: sugar example
 
 ```javascript
     var hive = require('thrift-hive');
@@ -20,14 +30,11 @@ with the `end` function as a shortcut to `connection.end`.
     	port: 10000
     	timeout: 1000
     });
-    // Execute with fetchAll
-    client.execute('show databases', function(err){
+    // Execute query
+    client.query('show databases', function(err, databases){
         assert.ifError(err);
-        client.fetchAll(function(err, databases){
-            assert.ifError(err);
-            console.log(databases);
-            client.end();
-        });
+        console.log(databases);
+        client.end();
     });
 ```
 ## Hive connection: raw example
