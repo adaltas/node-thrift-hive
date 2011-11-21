@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-    // Client conenction
     var assert     = require('assert');
     var thrift     = require('thrift');
 	var transport  = require('thrift/lib/thrift/transport');
@@ -9,7 +8,7 @@
 	var options = {transport: transport.TBufferedTransport, timeout: 1000};
 	var connection = thrift.createConnection('127.0.0.1', 10000, options);
 	var client = thrift.createClient(ThriftHive, connection);
-    // Execute with fetchAll
+    // Execute query
     client.execute('show databases', function(err){
         assert.ifError(err);
         client.fetchAll(function(err, databases){

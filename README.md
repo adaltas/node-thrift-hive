@@ -1,53 +1,75 @@
-# Thrift Hive - Hive client using the Apache Thrift RPC system.
+# Thrift Hive - Hive client with multi versions support and a streaming API.
 
-The project export the Hive API throught Thrift. Multiple versions of hive are
-supported. 
+The project export the [Hive API][1] using [Apache Thrift RPC system][2]. It 
+support multiple versions and a readable stream API.
 
-The only function added to the generated Thrift code is `hive.createClient`. It 
-take an `options` object as its argument and return an object with the following
-properties:
+## Hive Client
+
+We've added a function `hive.createClient` to simplify coding. However, you 
+are free to use the raw Thrift API. The client take an `options` object as its 
+argument andexpose an `execute` and a `query` methods.
+
+Available options
+-   `version`   
+    default to '0.7.1-cdh3u2'
+-   `server`   
+    default to '127.0.0.1'
+-   `port`   
+    default to 10000
+-   `timeout`   
+    default to 1000 milliseconds
+
+Available API
 
 -   `client`   
-    A reference to the hive client returned by `thrift.createClient`
+    A reference to the thrift client returned by `thrift.createClient`
 -   `connection`   
-    A reference to the hive connection returned by `thrift.createConnection`
+    A reference to the thrift connection returned by `thrift.createConnection`
 -   `end([callback])`   
     Close the Thrift connection
 -   `execute(query, [callback])`   
     Execute a query
--   `query(query, [size], [callback])`   
+-   `query(query, [size])`   
     Execute a query and return its results as an array of arrays (rows and 
-    columns)
+    columns). The size argument is optional and indicate the number of row to 
+    return on each fetch.
 
-## Hive connection: sugar example
-
-```javascript
-    var hive = require('thrift-hive');
-	// Client connection
-    var client = hive.createClient({
-    	version: '0.7.1-cdh3u2'
-    	server: '127.0.0.1'
-    	port: 10000
-    	timeout: 1000
-    });
-    // Execute query
-    client.query('show databases', function(err, databases){
-        assert.ifError(err);
-        console.log(databases);
-        client.end();
-    });
+```coffeescript
+    hive = require 'thrift-hive'
+    # Client connection
+    client = hive.createClient
+        version: '0.7.1-cdh3u2'
+        server: '127.0.0.1'
+        port: 10000
+        timeout: 1000
+    # Execute
+    client.execute 'USE default', (err) ->
+        console.log err.message if err
+        client.end()
 ```
-## Hive connection: raw example
+
+## Hive Query
+
+The `client.query` function return an object similar to the 
+[Readable Stream API][3]. At the moment, we have only implemented `pause` and 
+`resume`.
+
+
+
+## Raw versus sugar API
+
+Here's an exemple using the raw API
 
 ```javascript
-	var thrift     = require('thrift');
-	var transport = require('thrift/transport');
-	var ThriftHive = require('thrift-hive/0.7.1-cdh3u2/ThriftHive');
-    // Client connection
+    var assert     = require('assert');
+    var thrift     = require('thrift');
+    var transport  = require('thrift/lib/thrift/transport');
+	var ThriftHive = require('../lib/0.7.1-cdh3u2/ThriftHive');
+	// Client connection
 	var options = {transport: transport.TBufferedTransport, timeout: 1000};
 	var connection = thrift.createConnection('127.0.0.1', 10000, options);
 	var client = thrift.createClient(ThriftHive, connection);
-    // Execute with fetchAll
+    // Execute query
     client.execute('show databases', function(err){
         assert.ifError(err);
         client.fetchAll(function(err, databases){
@@ -58,3 +80,30 @@ properties:
     });
 ```
 
+Here's an exemple using our sugar API
+
+```javascript
+    var assert = require('assert');
+    var hive = require('thrift-hive');
+    // Client connection
+    var client = hive.createClient({
+        version: '0.7.1-cdh3u2',
+        server: '127.0.0.1',
+        port: 10000,
+        timeout: 1000
+    });
+    // Execute query
+    client.query('show databases')
+    .on('row', function(database){
+        console.log(database);
+    })
+    .on('end', function(err){
+        assert.ifError(err);
+        client.end();
+    });
+```
+
+
+[1]: http://hive.apache.org  "Apache Hive"
+[2]: http://thrift.apache.org  "Apache Thrift"
+[3]: http://nodejs.org/docs/v0.6.2/api/streams.html#readable_Stream  "Readable Stream API"

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
     var assert = require('assert');
-    var hive = require('..');
+    var hive = require('thrift-hive');
     // Client connection
     var client = hive.createClient({
         version: '0.7.1-cdh3u2',
@@ -10,8 +10,11 @@
         timeout: 1000
     });
     // Execute query
-    client.query('show databases', function(err, databases){
+    client.query('show databases')
+    .on('row', function(database){
+        console.log(database);
+    })
+    .on('end', function(err){
         assert.ifError(err);
-        console.log(databases);
         client.end();
     });
