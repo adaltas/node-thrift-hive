@@ -40,45 +40,29 @@ module.exports =
             assert.ok Array.isArray row
             assert.eql row.length, 3
         .on 'error', (err) ->
-            assert.ifError err
-        .on 'end', (err) ->
-            assert.ifError err
+            assert.ok false
+        .on 'end', ->
             assert.eql count, 54
             next()
     'Query # n': (next) ->
         count = 0
-        success_called = false
         client.query("select * from #{table}", 10)
         .on 'row', (row) ->
             count++
         .on 'error', (err) ->
-            assert.ifError err
-        .on 'success', (err) ->
-            success_called = true
-        .on 'end', (err) ->
-            assert.ifError err
+            assert.ok false
+        .on 'end', ->
             assert.eql count, 54
-            next() if success_called
+            next()
     'Query # error': (next) ->
-        error_called = false
         client.query("select * from undefined_table", 10)
         .on 'row', (row) ->
             assert.ok false
         .on 'error', (err) ->
             assert.ok err instanceof Error
-            error_called = true
-        .on 'success', ->
-            assert.ok false
-        .on 'end', (err) ->
-            assert.ok err instanceof Error
-            next() if error_called
-    'Query # error # no error callback': (next) ->
-        client.query("select * from undefined_table", 10)
-        .on 'row', (row) ->
-            assert.ok false
-        .on 'end', (err) ->
-            assert.ok err instanceof Error
             next()
+        .on 'end', ->
+            assert.ok false
     'Query # pause/resume': (next) ->
         count = 0
         query = client.query("select * from #{table}", 10)
@@ -88,8 +72,9 @@ module.exports =
             setTimeout ->
                 query.resume()
             , 10
-        .on 'end', (err) ->
-            assert.ifError err
+        .on 'error', (err) ->
+            assert.ok false
+        .on 'end', ->
             assert.eql count, 54
             next()
     'Close': (next) ->

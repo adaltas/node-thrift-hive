@@ -1,4 +1,6 @@
 
+Stream = require 'stream'
+
 thrift = require 'thrift'
 transport = require 'thrift/lib/thrift/transport'
 EventEmitter = require('events').EventEmitter
@@ -24,35 +26,36 @@ module.exports.createClient = (options = {}) ->
             size = -1
         client.execute query, (err) ->
             if err
+                emitter.readable = false
                 emitter.emit 'error', err if emitter.listeners('error').length
-                emitter.emit 'end', err
                 return
             fetch()
-        closed = false
-        emitter = new EventEmitter
+        buffer = []
+        #emitter = new EventEmitter
+        emitter = new Stream
+        emitter.readable = true
         emitter.paused = 0
         emitter.pause = ->
-            @paused++
+            @paused = 1
         emitter.resume = ->
-            @paused--
-            fetch() if @paused is 0
+            @was = @paused
+            @paused = 0
+            fetch() if @was
         handle = (err, rows) =>
             if err
-                closed = true
+                emitter.readable = false
                 emitter.emit 'error', err
-                emitter.emit 'end', err
                 return
             rows = rows.map (row) -> row.split '\t'
             for row in rows
                 emitter.emit 'row', row
             if rows.length is size
-                fetch() 
+                fetch() unless emitter.paused
             else
-                closed = true
-                emitter.emit 'success', err
+                emitter.readable = false
                 emitter.emit 'end'
         fetch = ->
-            return if emitter.paused or closed
+            return if emitter.paused or not emitter.readable
             if size
             then client.fetchN size, handle
             else client.fetchAll handle
