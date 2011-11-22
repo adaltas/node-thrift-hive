@@ -35,7 +35,8 @@ module.exports =
     'Query # all': (next) ->
         count = 0
         client.query("SELECT * FROM #{table}")
-        .on 'row', (row) ->
+        .on 'row', (row, index) ->
+            assert.eql index, count
             count++
             assert.ok Array.isArray row
             assert.eql row.length, 3
@@ -47,7 +48,8 @@ module.exports =
     'Query # n': (next) ->
         count = 0
         client.query("select * from #{table}", 10)
-        .on 'row', (row) ->
+        .on 'row', (row, index) ->
+            assert.eql index, count
             count++
         .on 'error', (err) ->
             assert.ok false
@@ -66,7 +68,8 @@ module.exports =
     'Query # pause/resume': (next) ->
         count = 0
         query = client.query("select * from #{table}", 10)
-        .on 'row', (row) ->
+        .on 'row', (row, index) ->
+            assert.eql index, count
             count++
             query.pause()
             setTimeout ->

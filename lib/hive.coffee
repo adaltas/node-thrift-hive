@@ -32,6 +32,7 @@ module.exports.createClient = (options = {}) ->
             fetch()
         buffer = []
         #emitter = new EventEmitter
+        count = 0
         emitter = new Stream
         emitter.readable = true
         emitter.paused = 0
@@ -48,7 +49,7 @@ module.exports.createClient = (options = {}) ->
                 return
             rows = rows.map (row) -> row.split '\t'
             for row in rows
-                emitter.emit 'row', row
+                emitter.emit 'row', row, count++
             if rows.length is size
                 fetch() unless emitter.paused
             else
