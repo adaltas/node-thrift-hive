@@ -34,16 +34,25 @@ module.exports =
                         next()
     'Query # all': (next) ->
         count = 0
+        call_row_first = call_row_last = false
         client.query("SELECT * FROM #{table}")
         .on 'row', (row, index) ->
             assert.eql index, count
             count++
             assert.ok Array.isArray row
             assert.eql row.length, 3
+        .on 'row-first', (row, index) ->
+            assert.eql count, 0
+            call_row_first = true
+        .on 'row-last', (row, index) ->
+            assert.eql count, 54
+            call_row_last = true
         .on 'error', (err) ->
             assert.ok false
         .on 'end', ->
             assert.eql count, 54
+            assert.ok call_row_first
+            assert.ok call_row_last
             next()
     'Query # n': (next) ->
         count = 0
@@ -80,6 +89,19 @@ module.exports =
         .on 'end', ->
             assert.eql count, 54
             next()
+    'Query # header': (next) ->
+        # Test where hive.cli.print.header impact Thrift
+        # answer is no
+        count = 0
+        client.execute 'set hive.cli.print.header=true', (err) ->
+            query = client.query("select * from #{table}", 10)
+            .on 'row', (row, index) ->
+                count++
+            .on 'error', (err) ->
+                assert.ok false
+            .on 'end', ->
+                assert.eql count, 54
+                next()
     'Close': (next) ->
         client.end()
         next()

@@ -49,10 +49,12 @@ module.exports.createClient = (options = {}) ->
                 return
             rows = rows.map (row) -> row.split '\t'
             for row in rows
+                emitter.emit 'row-first', row, 0 if count is 0
                 emitter.emit 'row', row, count++
             if rows.length is size
                 fetch() unless emitter.paused
             else
+                emitter.emit 'row-last', row, count - 1
                 emitter.readable = false
                 emitter.emit 'end'
         fetch = ->

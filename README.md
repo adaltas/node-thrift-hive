@@ -50,11 +50,19 @@ Available API
 
 ## Hive Query
 
-The `client.query` function return an object similar to the 
-[Readable Stream API][3]. At the moment, we have only implemented `pause` and 
-`resume`.
+The `client.query` function implement the [EventEmitter API][3].
 
+The following events are emitted:
 
+-   `row`
+-   `row-first`
+-   `row-last`
+-   `error`
+-   `end`
+
+The `client.query` functionreturn a Node [Readable Stream][4]. It is possible to 
+pipe the data into a [Writable Stream][5] but it is your responsibility to emit
+the `data` event, usually inside the `row` event.
 
 ## Raw versus sugar API
 
@@ -106,4 +114,6 @@ Here's an exemple using our sugar API
 
 [1]: http://hive.apache.org  "Apache Hive"
 [2]: http://thrift.apache.org  "Apache Thrift"
-[3]: http://nodejs.org/docs/v0.6.2/api/streams.html#readable_Stream  "Readable Stream API"
+[3]: http://nodejs.org/docs/v0.6.2/api/events.html#events.EventEmitter  "EventEmitter API"
+[4]: http://nodejs.org/docs/v0.6.2/api/streams.html#readable_Stream  "Readable Stream API"
+[5]: http://nodejs.org/docs/v0.6.2/api/streams.html#writable_Stream  "Writable Stream API"
