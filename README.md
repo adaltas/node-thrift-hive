@@ -1,7 +1,13 @@
-# Thrift Hive - Hive client with multi versions support and a streaming API.
+# Thrift Hive - Hive client with multi versions support and a Readable Stream API.
 
 The project export the [Hive API][1] using [Apache Thrift RPC system][2]. It 
 support multiple versions and a readable stream API.
+
+## Installation
+
+```
+    npm install thrift-hive
+```
 
 ## Hive Client
 
