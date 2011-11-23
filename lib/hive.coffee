@@ -6,7 +6,7 @@ thrift = require 'thrift'
 transport = require 'thrift/lib/thrift/transport'
 EventEmitter = require('events').EventEmitter
 
-split = (queries) ->
+split = module.exports.split = (queries) ->
     return queries if Array.isArray queries
     queries = queries.split('\n').filter( (line) -> line.trim().indexOf('--') isnt 0 ).join('\n')
     queries = queries.split ';'
