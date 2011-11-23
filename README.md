@@ -100,6 +100,11 @@ The following events are emitted:
 -   `end`
     Emitted when there are no more rows to retrieve, not called if there was
     an error before.
+-   `both`
+    Convenient event combining the `error` and `end` events. Emitted when an
+    error occured or when there are no more rows to retrieve. Return the same 
+    arguments than the `error` or `end` event depending on the operation 
+    outturn.
 
 The `client.query` functionreturn a Node [Readable Stream][4]. It is possible to 
 pipe the data into a [Writable Stream][5] but it is your responsibility to emit
@@ -168,7 +173,7 @@ the tests. A database `test_database` will be created if it does not yet exist
 and all the tests will run on it.
 
 ```bash
-    expresso -s test
+    expresso -s
 ```
 
 [1]: http://hive.apache.org  "Apache Hive"

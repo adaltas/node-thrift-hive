@@ -36,7 +36,14 @@ module.exports.createClient = (options = {}) ->
             client.execute query, (err) ->
                 if err
                     emitter.readable = false
-                    emitter.emit 'error', err if emitter.listeners('error').length
+                    # emit error only if
+                    # - there is an error callback
+                    # - there is no error callback and no both callback
+                    lerror = emitter.listeners('error').length
+                    lboth = emitter.listeners('both').length
+                    emitError = lerror or (not lerror and not lboth)
+                    emitter.emit 'error', err if emitError
+                    emitter.emit 'both', err 
                     return
                 fetch()
         exec() if query
@@ -59,7 +66,14 @@ module.exports.createClient = (options = {}) ->
         handle = (err, rows) =>
             if err
                 emitter.readable = false
-                emitter.emit 'error', err
+                # emit error only if
+                # - there is an error callback
+                # - there is no error callback and no both callback
+                lerror = emitter.listeners('error').length
+                lboth = emitter.listeners('both').length
+                emitError = lerror or (not lerror and not lboth)
+                emitter.emit 'error', err if emitError
+                emitter.emit 'both', err
                 return
             rows = rows.map (row) -> row.split '\t'
             for row in rows
@@ -71,6 +85,7 @@ module.exports.createClient = (options = {}) ->
                 emitter.emit 'row-last', row, count - 1
                 emitter.readable = false
                 emitter.emit 'end'
+                emitter.emit 'both'
         fetch = ->
             return if emitter.paused or not emitter.readable
             if size

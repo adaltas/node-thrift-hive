@@ -62,14 +62,19 @@ module.exports =
             assert.eql count, 54
             next()
     'Query # error': (next) ->
+        error_called = false
         client.query("select * from undefined_table", 10)
         .on 'row', (row) ->
             assert.ok false
         .on 'error', (err) ->
             assert.ok err instanceof Error
-            next()
+            error_called = true
         .on 'end', ->
             assert.ok false
+        .on 'both', (err) ->
+            assert.ok err instanceof Error
+            assert.ok error_called
+            next()
     'Query # pause/resume': (next) ->
         count = 0
         query = client.query("select * from #{table}", 10)
