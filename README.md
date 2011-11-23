@@ -9,6 +9,31 @@ support multiple versions and a readable stream API.
     npm install thrift-hive
 ```
 
+## Quick example
+
+```javascript
+    var assert = require('assert');
+    var hive = require('thrift-hive');
+    // Client connection
+    var client = hive.createClient({
+        version: '0.7.1-cdh3u2',
+        server: '127.0.0.1',
+        port: 10000,
+        timeout: 1000
+    });
+    // Execute query
+    client.execute('use default', function(err){
+        client.query('show tables')
+        .on('row', function(database){
+            console.log(database);
+        })
+        .on('end', function(err){
+            assert.ifError(err);
+            client.end();
+        });
+    });
+```
+
 ## Hive Client
 
 We've added a function `hive.createClient` to simplify coding. However, you 
@@ -34,7 +59,8 @@ Available API
 -   `end([callback])`   
     Close the Thrift connection
 -   `execute(query, [callback])`   
-    Execute a query
+    Execute a query and, when done, call the provided callback with an optional 
+    error.
 -   `query(query, [size])`   
     Execute a query and return its results as an array of arrays (rows and 
     columns). The size argument is optional and indicate the number of row to 
@@ -61,18 +87,28 @@ The `client.query` function implement the [EventEmitter API][3].
 The following events are emitted:
 
 -   `row`
+    Emitted for each row returned by Hive. Contains a two arguments, the row
+    as an array and the row index.
 -   `row-first`
+    Emitted after the first row returned by Hive. Contains a two arguments, 
+    the row as an array and the row index (always 0).
 -   `row-last`
+    Emitted after the last row returned by Hive. Contains a two arguments, 
+    the row as an array and the row index.
 -   `error`
+    Emitted when the connection failed or when Hive return an error.
 -   `end`
+    Emitted when there are no more rows to retrieve, not called if there was
+    an error before.
 
 The `client.query` functionreturn a Node [Readable Stream][4]. It is possible to 
 pipe the data into a [Writable Stream][5] but it is your responsibility to emit
 the `data` event, usually inside the `row` event.
 
-## Raw versus sugar API
+## Navite Thrift API
 
-Here's an exemple using the raw API
+Here's the same example as the one in the "Quick example" section but using the 
+native thrift API.
 
 ```javascript
     var assert     = require('assert');
@@ -84,39 +120,56 @@ Here's an exemple using the raw API
 	var connection = thrift.createConnection('127.0.0.1', 10000, options);
 	var client = thrift.createClient(ThriftHive, connection);
     // Execute query
-    client.execute('show databases', function(err){
-        assert.ifError(err);
-        client.fetchAll(function(err, databases){
+    client.execute('use default', function(err){
+        client.execute('show tables', function(err){
             assert.ifError(err);
-            console.log(databases);
-            connection.end();
+            client.fetchAll(function(err, databases){
+                assert.ifError(err);
+                console.log(databases);
+                connection.end();
+            });
         });
     });
 ```
 
-Here's an exemple using our sugar API
+## Multi queries
 
-```javascript
-    var assert = require('assert');
-    var hive = require('thrift-hive');
-    // Client connection
-    var client = hive.createClient({
-        version: '0.7.1-cdh3u2',
-        server: '127.0.0.1',
-        port: 10000,
-        timeout: 1000
-    });
-    // Execute query
-    client.query('show databases')
-    .on('row', function(database){
-        console.log(database);
-    })
-    .on('end', function(err){
-        assert.ifError(err);
-        client.end();
-    });
+For conveniency, we've added two functions, `multi_execute` and `multi_query` which
+may run multiple requests in sequential mode inside a same client connection. They 
+are both the same at the exeption of the last requests:
+
+-   `multi_execute` will end with an `execute` call, thus it's API is the same 
+    as the `execute` function.
+-   `multi_query` will end with a `query` call, thus it's API is the same 
+    as the `query` function.
+
+They accept the same arguments as their counterpart but the query may be an 
+array or a string of queries. If it is a string, it will be split into multiple 
+queries. Note, the parser is pretty light, removing ';' and comments but it 
+seems to do the job.
+
+## Testing
+
+Run the samples:
+
+```bash
+    node samples/execute.js
+    node samples/query.js
+    node samples/style_native.js
+    node samples/style_sugar.js
 ```
 
+Run the tests with `expresso`:
+
+Hive must be started with Thrift support. By default, the tests will connect to
+Hive Thrift server on the host `localhost` and the port `10000`. Edit the file
+"./test/config.json" if you wish to change the connection settings used accross
+the tests. A database `test_database` will be created if it does not yet exist
+and all the tests will run on it.
+
+```bash
+    expresso -s test
+```
 
 [1]: http://hive.apache.org  "Apache Hive"
 [2]: http://thrift.apache.org  "Apache Thrift"

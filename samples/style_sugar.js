@@ -10,11 +10,13 @@
         timeout: 1000
     });
     // Execute query
-    client.query('show databases')
-    .on('row', function(database){
-        console.log(database);
-    })
-    .on('end', function(err){
-        assert.ifError(err);
-        client.end();
+    client.execute('use default', function(err){
+        client.query('show tables')
+        .on('row', function(database){
+            console.log(database);
+        })
+        .on('end', function(err){
+            assert.ifError(err);
+            client.end();
+        });
     });
