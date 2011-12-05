@@ -26,13 +26,21 @@ module.exports.createClient = (options = {}) ->
     client: client
     end: connection.end.bind connection
     execute: (query, callback) ->
-        client.execute query, (err) ->
-            callback err if callback
+        emitter = new EventEmitter
+        process.nextTick ->
+            emitter.emit 'before', query
+            client.execute query, (err) ->
+                #if err
+                #then emitter.emit 'error', err
+                #else emitter.emit 'end', query
+                callback err, callback
+        emitter
     query: (query, size) ->
         if arguments.length is 2 and typeof size is 'function'
             callback = size
             size = -1
         exec = ->
+            emitter.emit 'before', query
             client.execute query, (err) ->
                 if err
                     emitter.readable = false
@@ -43,10 +51,10 @@ module.exports.createClient = (options = {}) ->
                     lboth = emitter.listeners('both').length
                     emitError = lerror or (not lerror and not lboth)
                     emitter.emit 'error', err if emitError
-                    emitter.emit 'both', err 
+                    emitter.emit 'both', err, query
                     return
                 fetch()
-        exec() if query
+        process.nextTick exec if query
         buffer = []
         #emitter = new EventEmitter
         count = 0
@@ -73,7 +81,7 @@ module.exports.createClient = (options = {}) ->
                 lboth = emitter.listeners('both').length
                 emitError = lerror or (not lerror and not lboth)
                 emitter.emit 'error', err if emitError
-                emitter.emit 'both', err
+                emitter.emit 'both', err, query
                 return
             rows = rows.map (row) -> row.split '\t'
             for row in rows
@@ -84,8 +92,8 @@ module.exports.createClient = (options = {}) ->
             else
                 emitter.emit 'row-last', row, count - 1
                 emitter.readable = false
-                emitter.emit 'end'
-                emitter.emit 'both'
+                emitter.emit 'end', query
+                emitter.emit 'both', null, query
         fetch = ->
             return if emitter.paused or not emitter.readable
             if size
@@ -93,20 +101,31 @@ module.exports.createClient = (options = {}) ->
             else client.fetchAll handle
         emitter
     multi_execute: (queries, callback) ->
+        emitter = new EventEmitter
         queries = split(queries)
         each(queries)
         .on 'item', (next, query) =>
-            @execute query, next
-        .on 'both', (err) -> callback err
+            exec = @execute query, next
+            exec.on 'before', -> emitter.emit.call emitter, 'before', arguments...
+            exec.on 'error', -> emitter.emit.call emitter, 'error', arguments...
+        .on 'both', (err) ->
+            if err
+            then emitter.emit.call emitter, 'error', arguments...
+            else emitter.emit.call emitter, 'end', arguments...
+            emitter.emit.call emitter, 'both', arguments...
+            callback err if callback
+        emitter
     multi_query: (hqls, callback) ->
         hqls = split(hqls)
+        query = @query()
         each(hqls)
         .on 'item', (next, hql, i) =>
             unless hqls.length is i + 1
-                @execute hql, next
+                exec = @execute hql, next
+                exec.on 'before', -> query.emit.call query, 'before', arguments...
+                exec.on 'error', -> query.emit.call query, 'error', arguments...
             else 
                 query.query(hql)
         .on 'both', (err) -> callback err
-        query = @query()
-        
+        query
     
