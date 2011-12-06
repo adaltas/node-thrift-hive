@@ -6,32 +6,32 @@ support multiple versions and a readable stream API.
 ## Installation
 
 ```
-    npm install thrift-hive
+npm install thrift-hive
 ```
 
 ## Quick example
 
 ```javascript
-    var assert = require('assert');
-    var hive = require('thrift-hive');
-    // Client connection
-    var client = hive.createClient({
-        version: '0.7.1-cdh3u2',
-        server: '127.0.0.1',
-        port: 10000,
-        timeout: 1000
-    });
-    // Execute query
-    client.execute('use default', function(err){
-        client.query('show tables')
-        .on('row', function(database){
-            console.log(database);
-        })
-        .on('end', function(err){
-            assert.ifError(err);
-            client.end();
-        });
-    });
+var assert = require('assert');
+var hive = require('thrift-hive');
+// Client connection
+var client = hive.createClient({
+	version: '0.7.1-cdh3u2',
+	server: '127.0.0.1',
+	port: 10000,
+	timeout: 1000
+});
+// Execute query
+client.execute('use default', function(err){
+	client.query('show tables')
+	.on('row', function(database){
+		console.log(database);
+	})
+	.on('end', function(err){
+		assert.ifError(err);
+		client.end();
+	});
+});
 ```
 
 ## Hive Client
@@ -67,17 +67,17 @@ Available API
     return on each fetch.
 
 ```coffeescript
-    hive = require 'thrift-hive'
-    # Client connection
-    client = hive.createClient
-        version: '0.7.1-cdh3u2'
-        server: '127.0.0.1'
-        port: 10000
-        timeout: 1000
-    # Execute
-    client.execute 'USE default', (err) ->
-        console.log err.message if err
-        client.end()
+hive = require 'thrift-hive'
+# Client connection
+client = hive.createClient
+	version: '0.7.1-cdh3u2'
+	server: '127.0.0.1'
+	port: 10000
+	timeout: 1000
+# Execute
+client.execute 'USE default', (err) ->
+	console.log err.message if err
+	client.end()
 ```
 
 ## Hive Query
@@ -106,9 +106,29 @@ The following events are emitted:
     arguments than the `error` or `end` event depending on the operation 
     outturn.
 
-The `client.query` functionreturn a Node [Readable Stream][4]. It is possible to 
-pipe the data into a [Writable Stream][5] but it is your responsibility to emit
+The `client.query` function return a Node [readable stream][4]. It is possible to 
+pipe the data into a [writable stream][5] but it is your responsibility to emit
 the `data` event, usually inside the `row` event.
+
+The following code written in CoffeeScript is an example of piping data returned by the query into a [writable stream][5].
+
+```coffeescript
+fs = require 'fs'
+hive = require 'thrift-hive'
+# Client connection
+client = hive.createClient
+    version: '0.7.1-cdh3u2'
+    server: '127.0.0.1'
+    port: 10000
+    timeout: 1000
+# Execute query
+client.query('show tables')
+.on 'row', (database) ->
+    this.emit 'data', 'Found ' + database + '\n'
+.on 'end', (err) ->
+    client.end()
+.pipe( fs.createWriteStream "#{__dirname}/pipe.out" )
+```
 
 ## Navite Thrift API
 
@@ -116,25 +136,25 @@ Here's the same example as the one in the "Quick example" section but using the
 native thrift API.
 
 ```javascript
-    var assert     = require('assert');
-    var thrift     = require('thrift');
-    var transport  = require('thrift/lib/thrift/transport');
-	var ThriftHive = require('../lib/0.7.1-cdh3u2/ThriftHive');
-	// Client connection
-	var options = {transport: transport.TBufferedTransport, timeout: 1000};
-	var connection = thrift.createConnection('127.0.0.1', 10000, options);
-	var client = thrift.createClient(ThriftHive, connection);
-    // Execute query
-    client.execute('use default', function(err){
-        client.execute('show tables', function(err){
-            assert.ifError(err);
-            client.fetchAll(function(err, databases){
-                assert.ifError(err);
-                console.log(databases);
-                connection.end();
-            });
-        });
-    });
+var assert     = require('assert');
+var thrift     = require('thrift');
+var transport  = require('thrift/lib/thrift/transport');
+var ThriftHive = require('../lib/0.7.1-cdh3u2/ThriftHive');
+// Client connection
+var options = {transport: transport.TBufferedTransport, timeout: 1000};
+var connection = thrift.createConnection('127.0.0.1', 10000, options);
+var client = thrift.createClient(ThriftHive, connection);
+// Execute query
+client.execute('use default', function(err){
+	client.execute('show tables', function(err){
+		assert.ifError(err);
+		client.fetchAll(function(err, databases){
+			assert.ifError(err);
+			console.log(databases);
+			connection.end();
+		});
+	});
+});
 ```
 
 ## Multi queries
@@ -158,10 +178,10 @@ seems to do the job.
 Run the samples:
 
 ```bash
-    node samples/execute.js
-    node samples/query.js
-    node samples/style_native.js
-    node samples/style_sugar.js
+node samples/execute.js
+node samples/query.js
+node samples/style_native.js
+node samples/style_sugar.js
 ```
 
 Run the tests with `expresso`:
@@ -173,7 +193,7 @@ the tests. A database `test_database` will be created if it does not yet exist
 and all the tests will run on it.
 
 ```bash
-    expresso -s
+expresso -s
 ```
 
 [1]: http://hive.apache.org  "Apache Hive"
