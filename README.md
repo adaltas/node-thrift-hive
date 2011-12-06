@@ -41,6 +41,7 @@ are free to use the raw Thrift API. The client take an `options` object as its
 argument andexpose an `execute` and a `query` methods.
 
 Available options
+
 -   `version`   
     default to '0.7.1-cdh3u2'
 -   `server`   
