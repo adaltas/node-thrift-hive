@@ -14,7 +14,8 @@ client.execute 'use test_database', (err) ->
             console.log row
             query.resume()
         , 100
-    .on 'end', (err) ->
+    .on 'error', (err) ->
+    .on 'end', () ->
         console.log err.message if err
         client.end()
             

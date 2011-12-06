@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-var assert = require('assert');
 var hive = require('thrift-hive');
 // Client connection
 var client = hive.createClient({
@@ -15,8 +14,11 @@ client.execute('use default', function(err){
     .on('row', function(database){
         console.log(database);
     })
-    .on('end', function(err){
-        assert.ifError(err);
+    .on('error', function(err){
+        console.log(err.message);
+        client.end();
+    });
+    .on('end', function(){
         client.end();
     });
 });

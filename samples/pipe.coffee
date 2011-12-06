@@ -12,6 +12,8 @@ client = hive.createClient
 client.query('show tables')
 .on 'row', (database) ->
     this.emit 'data', 'Found ' + database + '\n'
-.on 'end', (err) ->
+.on 'error', (err) ->
+    client.end()
+.on 'end', () ->
     client.end()
 .pipe( fs.createWriteStream "#{__dirname}/pipe.out" )

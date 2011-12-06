@@ -13,8 +13,11 @@ client.execute('use default', function(err){
     client.execute('show tables', function(err){
         assert.ifError(err);
         client.fetchAll(function(err, databases){
-            assert.ifError(err);
-            console.log(databases);
+            if(err){
+                console.log(err.message);
+            }else{
+                console.log(databases);
+            }
             connection.end();
         });
     });
