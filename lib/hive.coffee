@@ -6,12 +6,12 @@ thrift = require 'thrift'
 transport = require 'thrift/lib/thrift/transport'
 EventEmitter = require('events').EventEmitter
 
-split = module.exports.split = (queries) ->
-    return queries if Array.isArray queries
-    queries = queries.split('\n').filter( (line) -> line.trim().indexOf('--') isnt 0 ).join('\n')
-    queries = queries.split ';'
-    queries = queries.map (query) -> query.trim()
-    queries = queries.filter (query) -> query.indexOf('--') isnt 0 and query isnt ''
+split = module.exports.split = (hqls) ->
+    return hqls if Array.isArray hqls
+    hqls = hqls.split('\n').filter( (line) -> line.trim().indexOf('--') isnt 0 ).join('\n')
+    hqls = hqls.split ';'
+    hqls = hqls.map (query) -> query.trim()
+    hqls = hqls.filter (query) -> query.indexOf('--') isnt 0 and query isnt ''
 
 module.exports.createClient = (options = {}) ->
     options.version ?= '0.7.1-cdh3u2'
@@ -30,10 +30,19 @@ module.exports.createClient = (options = {}) ->
         process.nextTick ->
             emitter.emit 'before', query
             client.execute query, (err) ->
-                #if err
-                #then emitter.emit 'error', err
-                #else emitter.emit 'end', query
-                callback err, callback
+                if err
+                    emitter.readable = false
+                    # emit error only if
+                    # - an error callback or
+                    # - no error callback, no both callback, no user callback
+                    lerror = emitter.listeners('error').length
+                    lboth = emitter.listeners('both').length
+                    emitError = lerror or (not lerror and not lboth and not callback )
+                    emitter.emit 'error', err if emitError
+                else
+                    emitter.emit 'end', null, query
+                emitter.emit 'both', err, query
+                callback err, callback if callback
         emitter
     query: (query, size) ->
         if arguments.length is 2 and typeof size is 'function'
@@ -45,11 +54,11 @@ module.exports.createClient = (options = {}) ->
                 if err
                     emitter.readable = false
                     # emit error only if
-                    # - there is an error callback
-                    # - there is no error callback and no both callback
+                    # - an error callback or
+                    # - no error callback and no both callback
                     lerror = emitter.listeners('error').length
                     lboth = emitter.listeners('both').length
-                    emitError = lerror or (not lerror and not lboth)
+                    emitError = lerror or (not lerror and not lboth) # and not callback if we add callback support
                     emitter.emit 'error', err if emitError
                     emitter.emit 'both', err, query
                     return
@@ -75,8 +84,8 @@ module.exports.createClient = (options = {}) ->
             if err
                 emitter.readable = false
                 # emit error only if
-                # - there is an error callback
-                # - there is no error callback and no both callback
+                # - an error callback or
+                # - no error callback and no both callback
                 lerror = emitter.listeners('error').length
                 lboth = emitter.listeners('both').length
                 emitError = lerror or (not lerror and not lboth)
@@ -100,14 +109,13 @@ module.exports.createClient = (options = {}) ->
             then client.fetchN size, handle
             else client.fetchAll handle
         emitter
-    multi_execute: (queries, callback) ->
+    multi_execute: (hqls, callback) ->
         emitter = new EventEmitter
-        queries = split(queries)
-        each(queries)
+        hqls = split(hqls)
+        each(hqls)
         .on 'item', (next, query) =>
             exec = @execute query, next
             exec.on 'before', -> emitter.emit.call emitter, 'before', arguments...
-            exec.on 'error', -> emitter.emit.call emitter, 'error', arguments...
         .on 'both', (err) ->
             if err
             then emitter.emit.call emitter, 'error', arguments...
@@ -115,17 +123,26 @@ module.exports.createClient = (options = {}) ->
             emitter.emit.call emitter, 'both', arguments...
             callback err if callback
         emitter
-    multi_query: (hqls, callback) ->
+    multi_query: (hqls) ->
         hqls = split(hqls)
         query = @query()
         each(hqls)
         .on 'item', (next, hql, i) =>
             unless hqls.length is i + 1
-                exec = @execute hql, next
+                exec = @execute hql#, next
                 exec.on 'before', -> query.emit.call query, 'before', arguments...
-                exec.on 'error', -> query.emit.call query, 'error', arguments...
+                exec.on 'error', (err) ->
+                    query.readable = false
+                    # emit error only if
+                    # - an error callback or
+                    # - no error callback and no both callback
+                    lerror = query.listeners('error').length
+                    lboth = query.listeners('both').length
+                    emitError = lerror or (not lerror and not lboth)
+                    query.emit 'error', err if emitError
+                    query.emit 'both', err, query
+                exec.on 'end', -> next()
             else 
                 query.query(hql)
-        .on 'both', (err) -> callback err
         query
     
