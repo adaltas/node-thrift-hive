@@ -8,7 +8,25 @@ EventEmitter = require('events').EventEmitter
 
 split = module.exports.split = (hqls) ->
     return hqls if Array.isArray hqls
-    hqls = hqls.split('\n').filter( (line) -> line.trim().indexOf('--') isnt 0 ).join('\n')
+    commented = false
+    hqls = hqls.split('\n').filter( (line) -> 
+        line = line.trim()
+        skip = false
+        if not commented and line.indexOf('/*') isnt -1
+            commented = '/*' 
+            skip = true
+        else if not commented and line is '--'
+            commented = '--' 
+            skip = true
+        else if commented is '/*' and (line.lastIndexOf('*/') is (line.length - 2))
+            commented = false 
+            skip = true
+        else if commented is '--' and line is '--'
+            commented = false 
+            skip = true
+        skip = true if line.indexOf('--') is 0
+        not commented and not skip
+    ).join('\n')
     hqls = hqls.split ';'
     hqls = hqls.map (query) -> query.trim()
     hqls = hqls.filter (query) -> query.indexOf('--') isnt 0 and query isnt ''

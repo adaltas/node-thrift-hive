@@ -1,11 +1,9 @@
 
 assert = require 'assert'
 hive = require "#{__dirname}/.."
+config = require './config'
 
-db = 'test_database'
-table = 'test_table'
-
-client = hive.createClient require './config.json'
+client = hive.createClient config
 
 module.exports =
     'Multi # Execute # String': (next) ->
@@ -14,9 +12,9 @@ module.exports =
         count_both = 0
         execute = client.multi_execute """
         -- create db
-        CREATE DATABASE IF NOT EXISTS #{db};
+        CREATE DATABASE IF NOT EXISTS #{config.db};
         -- create table
-        CREATE TABLE IF NOT EXISTS #{table} ( 
+        CREATE TABLE IF NOT EXISTS #{config.table} ( 
             a_bigint BIGINT,
             an_int INT,
             a_date STRING
@@ -24,7 +22,7 @@ module.exports =
         ROW FORMAT DELIMITED
         FIELDS TERMINATED BY ',';
         -- load data
-        LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{table};
+        LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{config.table};
         """, (err) ->
             assert.ifError err
             assert.eql count_before, 3
@@ -45,7 +43,7 @@ module.exports =
         -- Throw err
         Whow, that should throw an exception!;
         -- create db
-        CREATE DATABASE IF NOT EXISTS #{db};
+        CREATE DATABASE IF NOT EXISTS #{config.db};
         """, (err) ->
             assert.ok err instanceof Error
             assert.eql err.name, 'HiveServerException'

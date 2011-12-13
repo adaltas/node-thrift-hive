@@ -1,20 +1,18 @@
 
 assert = require 'assert'
 hive = require "#{__dirname}/.."
+config = require './config'
 
-db = 'test_database'
-table = 'test_table'
-
-client = hive.createClient require './config.json'
+client = hive.createClient config
 
 module.exports =
     'Prepare': (next) ->
-        client.execute "CREATE DATABASE IF NOT EXISTS #{db}", (err) ->
+        client.execute "CREATE DATABASE IF NOT EXISTS #{config.db}", (err) ->
             assert.ifError err
-            client.execute "USE #{db}", (err) ->
+            client.execute "USE #{config.db}", (err) ->
                 assert.ifError err
                 client.execute """
-                    CREATE TABLE IF NOT EXISTS #{table} ( 
+                    CREATE TABLE IF NOT EXISTS #{config.table} ( 
                         a_bigint BIGINT,
                         an_int INT,
                         a_date STRING
@@ -24,14 +22,14 @@ module.exports =
                 """, (err) ->
                     assert.ifError err
                     client.execute """
-                    LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{table}
+                    LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{config.table}
                     """, (err) ->
                         assert.ifError err
                         next()
     'Query # all': (next) ->
         count = 0
         call_row_first = call_row_last = false
-        client.query("SELECT * FROM #{table}")
+        client.query("SELECT * FROM #{config.table}")
         .on 'row', (row, index) ->
             assert.eql index, count
             count++
@@ -52,7 +50,7 @@ module.exports =
             next()
     'Query # n': (next) ->
         count = 0
-        client.query("select * from #{table}", 10)
+        client.query("select * from #{config.table}", 10)
         .on 'row', (row, index) ->
             assert.eql index, count
             count++
@@ -77,7 +75,7 @@ module.exports =
             next()
     'Query # pause/resume': (next) ->
         count = 0
-        query = client.query("select * from #{table}", 10)
+        query = client.query("select * from #{config.table}", 10)
         .on 'row', (row, index) ->
             assert.eql index, count
             count++
@@ -95,7 +93,7 @@ module.exports =
         # answer is no
         count = 0
         client.execute 'set hive.cli.print.header=true', (err) ->
-            query = client.query("select * from #{table}", 10)
+            query = client.query("select * from #{config.table}", 10)
             .on 'row', (row, index) ->
                 count++
             .on 'error', (err) ->
