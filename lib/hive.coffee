@@ -32,7 +32,7 @@ split = module.exports.split = (hqls) ->
     hqls = hqls.filter (query) -> query.indexOf('--') isnt 0 and query isnt ''
 
 module.exports.createClient = (options = {}) ->
-    options.version ?= '0.7.1-cdh3u2'
+    options.version ?= '0.7.1-cdh3u3'
     options.server ?= '127.0.0.1'
     options.port ?= 10000
     options.timeout ?= 1000
