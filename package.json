@@ -13,7 +13,7 @@
     },
     "devDependencies": {
     },
-    "keywords": ['hive', 'nosql', 'hadoop'],
+    "keywords": ["hive", "nosql", "hadoop"],
     "main": "index",
     "engines": { "node": ">= 0.4.7" }
 }
