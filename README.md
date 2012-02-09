@@ -1,4 +1,11 @@
-# Thrift Hive - Hive client with multi versions support and a Readable Stream API.
+# Thrift Hive - Hive client using the Apache Thrift RPC system
+
+Hive client with the following main features:
+- fetch rows with optional batch size
+- implement Node Readable Stream API (including `pipe`)
+- hive multiple version support
+- multiple query support through the `multi_execute` and `multi_query` functions
+- advanced comments parsing
 
 The project export the [Hive API][1] using [Apache Thrift RPC system][2]. It 
 support multiple versions and a readable stream API.
@@ -20,8 +27,9 @@ var client = hive.createClient({
     port: 10000,
     timeout: 1000
 });
-// Execute query
+// Execute call
 client.execute('use default', function(err){
+    // Query call
     client.query('show tables')
     .on('row', function(database){
         console.log(database);
