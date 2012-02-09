@@ -169,7 +169,7 @@ client.execute('use default', function(err){
 
 For conveniency, we've added two functions, `multi_execute` and `multi_query` which
 may run multiple requests in sequential mode inside a same client connection. They 
-are both the same at the exeption of the last requests:
+are both the same except how the last query is handled:
 
 -   `multi_execute` will end with an `execute` call, thus it's API is the same 
     as the `execute` function.

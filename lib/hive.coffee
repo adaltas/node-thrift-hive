@@ -8,17 +8,17 @@ EventEmitter = require('events').EventEmitter
 
 split = module.exports.split = (hqls) ->
     return hqls if Array.isArray hqls
-    commented = false
+    commented = false # Are we in a commented mode
     hqls = hqls.split('\n').filter( (line) -> 
         line = line.trim()
-        skip = false
+        skip = false # Should we skip the current line
         if not commented and line.indexOf('/*') isnt -1
             commented = '/*' 
             skip = true
         else if not commented and line is '--'
             commented = '--' 
             skip = true
-        else if commented is '/*' and (line.lastIndexOf('*/') is (line.length - 2))
+        else if commented is '/*' and line.lastIndexOf('*/') isnt -1 and line.lastIndexOf('*/') is (line.length - 2)
             commented = false 
             skip = true
         else if commented is '--' and line is '--'
@@ -65,7 +65,7 @@ module.exports.createClient = (options = {}) ->
     query: (query, size) ->
         if arguments.length is 2 and typeof size is 'function'
             callback = size
-            size = -1
+            size = null
         exec = ->
             emitter.emit 'before', query
             client.execute query, (err) ->
@@ -86,12 +86,14 @@ module.exports.createClient = (options = {}) ->
         #emitter = new EventEmitter
         count = 0
         emitter = new Stream
+        emitter.size = size
         emitter.readable = true
         emitter.paused = 0
         emitter.query = (q) ->
             throw new Error 'Query already defined' if query
             query = q
             exec()
+            @
         emitter.pause = ->
             @paused = 1
         emitter.resume = ->
@@ -114,7 +116,7 @@ module.exports.createClient = (options = {}) ->
             for row in rows
                 emitter.emit 'row-first', row, 0 if count is 0
                 emitter.emit 'row', row, count++
-            if rows.length is size
+            if rows.length is emitter.size
                 fetch() unless emitter.paused
             else
                 emitter.emit 'row-last', row, count - 1
@@ -123,8 +125,8 @@ module.exports.createClient = (options = {}) ->
                 emitter.emit 'both', null, query
         fetch = ->
             return if emitter.paused or not emitter.readable
-            if size
-            then client.fetchN size, handle
+            if emitter.size
+            then client.fetchN emitter.size, handle
             else client.fetchAll handle
         emitter
     multi_execute: (hqls, callback) ->
@@ -141,7 +143,7 @@ module.exports.createClient = (options = {}) ->
             emitter.emit.call emitter, 'both', arguments...
             callback err if callback
         emitter
-    multi_query: (hqls) ->
+    multi_query: (hqls, size) ->
         hqls = split(hqls)
         query = @query()
         each(hqls)
@@ -161,6 +163,6 @@ module.exports.createClient = (options = {}) ->
                     query.emit 'both', err, query
                 exec.on 'end', -> next()
             else 
-                query.query(hql)
+                query.query(hql, size)
         query
     

@@ -17,7 +17,6 @@ module.exports =
         /*
         create table
         -- with some dash
-        */
         CREATE TABLE IF NOT EXISTS #{config.table} ( 
             a_bigint BIGINT,
             an_int INT,
@@ -29,18 +28,18 @@ module.exports =
         LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{config.table};
         -- return data
         SELECT * FROM #{config.table};
+        */
+        show databases;
         """)
         .on 'before', (query) ->
             count_before++
         .on 'row', (row) ->
             count_row++
         .on 'error', (err) ->
-            console.log err
             assert.ifError err
         .on 'end', (query) ->
-            assert.eql count_before, 4
-            assert.eql count_row, 54
-            assert.eql query, "SELECT * FROM #{config.table}"
+            assert.eql count_before, 2
+            assert.eql query, "show databases"
             next()
     'Close': (next) ->
         client.end()
