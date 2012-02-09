@@ -201,6 +201,7 @@ the tests. A database `test_database` will be created if it does not yet exist
 and all the tests will run on it.
 
 ```bash
+npm install -g expresso
 expresso -s
 ```
 
