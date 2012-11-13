@@ -1,16 +1,20 @@
 
-assert = require 'assert'
-hive = require "#{__dirname}/.."
+should = require 'should'
 config = require './config'
+hive = if process.env.EACH_COV then require '../lib-cov/hive' else require '../lib/hive'
 
-client = hive.createClient config
+client = null
+before ->
+    client = hive.createClient config
+after ->
+    client.end()
 
-module.exports =
-    'Prepare': (next) ->
+describe 'Query', ->
+    it 'Prepare', (next) ->
         client.execute "CREATE DATABASE IF NOT EXISTS #{config.db}", (err) ->
-            assert.ifError err
+            should.not.exist err
             client.execute "USE #{config.db}", (err) ->
-                assert.ifError err
+                should.not.exist err
                 client.execute """
                     CREATE TABLE IF NOT EXISTS #{config.table} ( 
                         a_bigint BIGINT,
@@ -20,75 +24,75 @@ module.exports =
                     ROW FORMAT DELIMITED
                     FIELDS TERMINATED BY ','
                 """, (err) ->
-                    assert.ifError err
+                    should.not.exist err
                     client.execute """
                     LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{config.table}
                     """, (err) ->
-                        assert.ifError err
+                        should.not.exist err
                         next()
-    'Query # all': (next) ->
+    it 'all', (next) ->
         count = 0
         call_row_first = call_row_last = false
         client.query("SELECT * FROM #{config.table}")
         .on 'row', (row, index) ->
-            assert.eql index, count
+            index.should.eql count
             count++
-            assert.ok Array.isArray row
-            assert.eql row.length, 3
+            row.should.be.an.instanceof Array
+            row.length.should.eql 3
         .on 'row-first', (row, index) ->
-            assert.eql count, 0
+            count.should.eql 0
             call_row_first = true
         .on 'row-last', (row, index) ->
-            assert.eql count, 54
+            count.should.eql 54
             call_row_last = true
         .on 'error', (err) ->
-            assert.ok false
+            false.should.not.be.ok
         .on 'end', ->
-            assert.eql count, 54
-            assert.ok call_row_first
-            assert.ok call_row_last
+            count.should.eql 54
+            call_row_first.should.be.ok
+            call_row_last.should.be.ok
             next()
-    'Query # n': (next) ->
+    it 'n', (next) ->
         count = 0
         client.query("select * from #{config.table}", 10)
         .on 'row', (row, index) ->
-            assert.eql index, count
+            index.should.eql count
             count++
         .on 'error', (err) ->
-            assert.ok false
+            false.should.not.be.ok
         .on 'end', ->
-            assert.eql count, 54
+            count.should.eql 54
             next()
-    'Query # error': (next) ->
+    it 'error', (next) ->
         error_called = false
         client.query("select * from undefined_table", 10)
         .on 'row', (row) ->
-            assert.ok false
+            false.should.not.be.ok
         .on 'error', (err) ->
-            assert.ok err instanceof Error
+            err.should.be.an.instanceof Error
             error_called = true
         .on 'end', ->
-            assert.ok false
+            false.should.not.be.ok
         .on 'both', (err) ->
-            assert.ok err instanceof Error
-            assert.ok error_called
+            err.should.be.an.instanceof Error
+            error_called.should.be.ok
             next()
-    'Query # pause/resume': (next) ->
+    it 'pause/resume', (next) ->
         count = 0
         query = client.query("select * from #{config.table}", 10)
         .on 'row', (row, index) ->
-            assert.eql index, count
+            index.should.eql count
             count++
             query.pause()
             setTimeout ->
                 query.resume()
             , 10
         .on 'error', (err) ->
-            assert.ok false
+            false.should.not.be.ok
         .on 'end', ->
-            assert.eql count, 54
+            count.should.eql 54
             next()
-    'Query # header': (next) ->
+    it 'header', (next) ->
         # Test where hive.cli.print.header impact Thrift
         # answer is no
         count = 0
@@ -97,10 +101,7 @@ module.exports =
             .on 'row', (row, index) ->
                 count++
             .on 'error', (err) ->
-                assert.ok false
+                false.should.not.be.ok
             .on 'end', ->
-                assert.eql count, 54
+                count.should.eql 54
                 next()
-    'Close': (next) ->
-        client.end()
-        next()

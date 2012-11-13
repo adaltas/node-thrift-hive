@@ -1,12 +1,16 @@
 
-assert = require 'assert'
-hive = require "#{__dirname}/.."
+should = require 'should'
 config = require './config'
+hive = if process.env.EACH_COV then require '../lib-cov/hive' else require '../lib/hive'
 
-client = hive.createClient config
+client = null
+before ->
+    client = hive.createClient config
+after ->
+    client.end()
 
-module.exports =
-    'Multi # Escape': (next) ->
+describe 'escape', ->
+    it 'should honor "--" and "/* */"', (next) ->
         count_before = 0
         count_row = 0
         client.multi_query("""
@@ -36,11 +40,8 @@ module.exports =
         .on 'row', (row) ->
             count_row++
         .on 'error', (err) ->
-            assert.ifError err
+            should.not.exist err
         .on 'end', (query) ->
-            assert.eql count_before, 2
-            assert.eql query, "show databases"
+            count_before.should.eql 2
+            query.should.eql "show databases"
             next()
-    'Close': (next) ->
-        client.end()
-        next()

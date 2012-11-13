@@ -1,12 +1,16 @@
 
-assert = require 'assert'
-hive = require "#{__dirname}/.."
+should = require 'should'
 config = require './config'
+hive = if process.env.EACH_COV then require '../lib-cov/hive' else require '../lib/hive'
 
-client = hive.createClient config
+client = null
+before ->
+    client = hive.createClient config
+after ->
+    client.end()
 
-module.exports =
-    'Multi # Query # String': (next) ->
+describe 'Multi # Query', ->
+    it 'String', (next) ->
         count_before = 0
         count_row = 0
         client.multi_query("""
@@ -30,13 +34,13 @@ module.exports =
         .on 'row', (row) ->
             count_row++
         .on 'error', (err) ->
-            assert.ifError err
+            should.not.exist err
         .on 'end', (query) ->
-            assert.eql count_before, 4
-            assert.eql count_row, 54
-            assert.eql query, "SELECT * FROM #{config.table}"
+            count_before.should.eql 4
+            count_row.should.eql 54
+            query.should.eql "SELECT * FROM #{config.table}"
             next()
-    'Multi # Query # Error in execute # No callback': (next) ->
+    it 'Error in execute # No callback', (next) ->
         count_before = 0
         count_error = 0
         client.multi_query("""
@@ -50,13 +54,10 @@ module.exports =
         .on 'error', (err) ->
             count_error++
         .on 'end', (query) ->
-            assert.ok false
+            false.should.not.be.ok
         .on 'both', (err) ->
-            assert.ok err instanceof Error
-            assert.eql err.name, 'HiveServerException'
-            assert.eql count_before, 1
-            assert.eql count_error, 1
+            err.should.be.an.instanceof Error
+            err.name.should.eql 'HiveServerException'
+            count_before.should.eql 1
+            count_error.should.eql 1
             next()
-    'Close': (next) ->
-        client.end()
-        next()

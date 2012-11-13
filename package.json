@@ -7,11 +7,13 @@
         { "name": "David Worms", "email": "david@adaltas.com" }
     ],
     "dependencies": {
-        "coffee-script": "latest",
         "thrift": "latest",
         "each": "latest"
     },
     "devDependencies": {
+        "coffee-script": "latest",
+        "mocha": "latest",
+        "should": "latest"
     },
     "keywords": ["hive", "nosql", "hadoop"],
     "main": "index",

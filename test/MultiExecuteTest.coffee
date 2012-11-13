@@ -1,12 +1,16 @@
 
-assert = require 'assert'
-hive = require "#{__dirname}/.."
+should = require 'should'
 config = require './config'
+hive = if process.env.EACH_COV then require '../lib-cov/hive' else require '../lib/hive'
 
-client = hive.createClient config
+client = null
+before ->
+    client = hive.createClient config
+after ->
+    client.end()
 
-module.exports =
-    'Multi # Execute # String': (next) ->
+describe 'Multi # Execute', ->
+    it 'String', (next) ->
         count_before = 0
         count_end = 0
         count_both = 0
@@ -24,10 +28,10 @@ module.exports =
         -- load data
         LOAD DATA LOCAL INPATH '#{__dirname}/data.csv' OVERWRITE INTO TABLE #{config.table};
         """, (err) ->
-            assert.ifError err
-            assert.eql count_before, 3
-            assert.eql count_end, 1
-            assert.eql count_both, 1
+            should.not.exist err
+            count_before.should.eql 3
+            count_end.should.eql 1
+            count_both.should.eql 1
             next()
         execute.on 'before', (query) ->
             count_before++
@@ -35,7 +39,7 @@ module.exports =
             count_end++
         execute.on 'both', (query) ->
             count_both++
-    'Multi # Execute # Error': (next) ->
+    it 'Error', (next) ->
         count_before = 0
         count_error = 0
         count_both = 0
@@ -45,20 +49,17 @@ module.exports =
         -- create db
         CREATE DATABASE IF NOT EXISTS #{config.db};
         """, (err) ->
-            assert.ok err instanceof Error
-            assert.eql err.name, 'HiveServerException'
-            assert.eql count_before, 1
-            assert.eql count_error, 1
-            assert.eql count_both, 1
+            err.should.be.an.instanceof Error
+            err.name.should.eql 'HiveServerException'
+            count_before.should.eql 1
+            count_error.should.eql 1
+            count_both.should.eql 1
             next()
         execute.on 'before', (query) ->
             count_before++
         execute.on 'error', (err) ->
-            assert.ok err instanceof Error
-            assert.eql err.name, 'HiveServerException'
+            err.should.be.an.instanceof Error
+            err.name.should.eql 'HiveServerException'
             count_error++
         execute.on 'both', (query) ->
             count_both++
-    'Close': (next) ->
-        client.end()
-        next()
