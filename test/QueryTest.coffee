@@ -1,7 +1,7 @@
 
 should = require 'should'
 config = require './config'
-hive = if process.env.EACH_COV then require '../lib-cov/hive' else require '../lib/hive'
+hive = if process.env.HIVE_COV then require '../lib-cov/hive' else require '../lib/hive'
 
 client = null
 before ->

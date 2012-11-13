@@ -9,6 +9,8 @@ test: build
 
 coverage: build
 	@jscoverage --no-highlight lib lib-cov
+	@rm -rf lib-conv/*-*
+	@cp -rp lib/*-* lib-cov
 	@HIVE_COV=1 $(MAKE) test REPORTER=html-cov > doc/coverage.html
 	@rm -rf lib-cov
 
