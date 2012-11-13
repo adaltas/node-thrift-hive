@@ -22,25 +22,25 @@ npm install thrift-hive
 var hive = require('thrift-hive');
 // Client connection
 var client = hive.createClient({
-    version: '0.7.1-cdh3u2',
-    server: '127.0.0.1',
-    port: 10000,
-    timeout: 1000
+  version: '0.7.1-cdh3u2',
+  server: '127.0.0.1',
+  port: 10000,
+  timeout: 1000
 });
 // Execute call
 client.execute('use default', function(err){
-    // Query call
-    client.query('show tables')
-    .on('row', function(database){
-        console.log(database);
-    })
-    .on('error', function(err){
-        console.log(err.message);
-        client.end();
-    });
-    .on('end', function(){
-        client.end();
-    });
+  // Query call
+  client.query('show tables')
+  .on('row', function(database){
+    console.log(database);
+  })
+  .on('error', function(err){
+    console.log(err.message);
+    client.end();
+  });
+  .on('end', function(){
+    client.end();
+  });
 });
 ```
 
@@ -81,14 +81,14 @@ Available API
 hive = require 'thrift-hive'
 # Client connection
 client = hive.createClient
-    version: '0.7.1-cdh3u2'
-    server: '127.0.0.1'
-    port: 10000
-    timeout: 1000
+  version: '0.7.1-cdh3u2'
+  server: '127.0.0.1'
+  port: 10000
+  timeout: 1000
 # Execute
 client.execute 'USE default', (err) ->
-    console.log err.message if err
-    client.end()
+  console.log err.message if err
+  client.end()
 ```
 
 ## Hive Query
@@ -128,18 +128,18 @@ fs = require 'fs'
 hive = require 'thrift-hive'
 # Client connection
 client = hive.createClient
-    version: '0.7.1-cdh3u2'
-    server: '127.0.0.1'
-    port: 10000
-    timeout: 1000
+  version: '0.7.1-cdh3u2'
+  server: '127.0.0.1'
+  port: 10000
+  timeout: 1000
 # Execute query
 client.query('show tables')
 .on 'row', (database) ->
-    this.emit 'data', 'Found ' + database + '\n'
+  this.emit 'data', 'Found ' + database + '\n'
 .on 'error', (err) ->
-    client.end()
+  client.end()
 .on 'end', () ->
-    client.end()
+  client.end()
 .pipe( fs.createWriteStream "#{__dirname}/pipe.out" )
 ```
 
@@ -159,17 +159,17 @@ var connection = thrift.createConnection('127.0.0.1', 10000, options);
 var client = thrift.createClient(ThriftHive, connection);
 // Execute query
 client.execute('use default', function(err){
-    client.execute('show tables', function(err){
-        assert.ifError(err);
-        client.fetchAll(function(err, databases){
-            if(err){
-                console.log(err.message);
-            }else{
-                console.log(databases);
-            }
-            connection.end();
-        });
+  client.execute('show tables', function(err){
+    assert.ifError(err);
+    client.fetchAll(function(err, databases){
+      if(err){
+        console.log(err.message);
+      }else{
+        console.log(databases);
+      }
+      connection.end();
     });
+  });
 });
 ```
 

@@ -1,21 +1,21 @@
 {
-    "name": "thrift-hive",
-    "description": "Hive client using the Apache Thrift RPC system",
-    "version": "0.0.6",
-    "author": "David Worms",
-    "contributors": [ 
-        { "name": "David Worms", "email": "david@adaltas.com" }
-    ],
-    "dependencies": {
-        "thrift": "latest",
-        "each": "latest"
-    },
-    "devDependencies": {
-        "coffee-script": "latest",
-        "mocha": "latest",
-        "should": "latest"
-    },
-    "keywords": ["hive", "nosql", "hadoop"],
-    "main": "index",
-    "engines": { "node": ">= 0.4.7" }
+  "name": "thrift-hive",
+  "description": "Hive client using the Apache Thrift RPC system",
+  "version": "0.0.6",
+  "author": "David Worms",
+  "contributors": [ 
+    { "name": "David Worms", "email": "david@adaltas.com" }
+  ],
+  "dependencies": {
+    "thrift": "latest",
+    "each": "latest"
+  },
+  "devDependencies": {
+    "coffee-script": "latest",
+    "mocha": "latest",
+    "should": "latest"
+  },
+  "keywords": ["hive", "nosql", "hadoop"],
+  "main": "index",
+  "engines": { "node": ">= 0.4.7" }
 }
