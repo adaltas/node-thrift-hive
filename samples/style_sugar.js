@@ -17,7 +17,7 @@ client.execute('use default', function(err){
   .on('error', function(err){
     console.log(err.message);
     client.end();
-  });
+  })
   .on('end', function(){
     client.end();
   });
